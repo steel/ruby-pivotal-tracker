@@ -23,8 +23,7 @@ class Tracker
   def project
     resource_uri = URI.parse("#{@base_url}/#{@project_id}")
    
-    response = Net::HTTP.new(resource_uri.host, resource_uri.port).start do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.get(resource_uri.path, {'Token' => @token})
     end
     validate_response(response.body)
@@ -40,8 +39,7 @@ class Tracker
   
   def stories
     resource_uri = URI.parse("#{@base_url}/#{@project_id}/stories")
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.get(resource_uri.path, {'Token' => @token})
     end
     validate_response(response.body)
@@ -71,8 +69,7 @@ class Tracker
     end
     
     resource_uri = URI.parse(uri)
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.get(resource_uri.path, {'Token' => @token})
     end
     validate_response(response.body)
@@ -93,8 +90,7 @@ class Tracker
   
   def find_story(id)
     resource_uri = URI.parse("#{@base_url}/#{@project_id}/stories/#{id}")
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.get(resource_uri.path, {'Token' => @token, 'Content-Type' => 'application/xml'})
     end
     validate_response(response.body)
@@ -111,8 +107,7 @@ class Tracker
   def create_story(story)
     story_xml = build_story_xml(story)
     resource_uri = URI.parse("#{@base_url}/#{@project_id}/stories")
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.post(resource_uri.path, story_xml, {'Token' => @token, 'Content-Type' => 'application/xml'})
     end
     validate_response(response.body)
@@ -123,8 +118,7 @@ class Tracker
   def update_story(story)
     story_xml = build_story_xml(story)
     resource_uri = URI.parse("#{@base_url}/#{@project_id}/stories/#{story[:id]}")
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.put(resource_uri.path, story_xml, {'Token' => @token, 'Content-Type' => 'application/xml'})
     end
     validate_response(response.body)
@@ -134,8 +128,7 @@ class Tracker
   
   def delete_story(story_id)
     resource_uri = URI.parse("#{@base_url}/#{@project_id}/stories/#{story_id}")
-    response = Net::HTTP.start(resource_uri.host, resource_uri.port) do |http|
-      http.use_ssl = @ssl
+    response = net_http(resource_uri).start do |http|
       http.delete(resource_uri.path, {'Token' => @token})
     end
     validate_response(response.body)
@@ -157,6 +150,12 @@ class Tracker
       if response[:success]=='false'      
         raise TrackerException.new((response/'message').innerHTML)
       end
+    end
+
+    def net_http(uri)
+      h = Net::HTTP.new(uri.host, uri.port)
+      h.use_ssl = @ssl
+      h
     end
 
 end
