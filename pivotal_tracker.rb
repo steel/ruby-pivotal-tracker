@@ -100,7 +100,8 @@ class Tracker
     @story = {
       :id   => doc.at('id').innerHTML.to_i,
       :type => doc.at('story_type').innerHTML,
-      :name => doc.at('name').innerHTML
+      :name => doc.at('name').innerHTML,
+      :url  => doc.at('url').innerHTML
     }
   end
   
@@ -111,8 +112,12 @@ class Tracker
       http.post(resource_uri.path, story_xml, {'Token' => @token, 'Content-Type' => 'application/xml'})
     end
     validate_response(response.body)
-    
-    Hpricot(response.body).at('response').at('id').innerHTML.to_i
+    doc = Hpricot(response.body).at('story')
+    { :id   => doc.at('id').innerHTML.to_i,
+      :type => doc.at('story_type').innerHTML,
+      :name => doc.at('name').innerHTML,
+      :url  => doc.at('url').innerHTML
+    }
   end
   
   def update_story(story)
@@ -140,6 +145,7 @@ class Tracker
     def build_story_xml(story)
       story_xml = "<story>"
       story.each do |key, value|
+        value = CGI::escape(value.to_s) if key==:description
         story_xml << "<#{key}>#{value.to_s}</#{key}>"
       end
       story_xml << "</story>"
