@@ -44,11 +44,7 @@ class Tracker
     @stories = []
     
     doc.search('stories > story').each do |story|
-      @stories << {
-        :id   => story.at('id').innerHTML.to_i,
-        :type => story.at('story_type').innerHTML,
-        :name => story.at('name').innerHTML
-      }
+      @stories << story_to_hash(story)
     end
     @stories
   end
@@ -74,11 +70,7 @@ class Tracker
     @stories = []
     
     doc.search('stories > story').each do |story|
-      @stories << {
-        :id   => story.at('id').innerHTML.to_i,
-        :type => story.at('story_type').innerHTML,
-        :name => story.at('name').innerHTML
-      }
+      @stories << story_to_hash(story)
     end
     @stories
   end
@@ -159,23 +151,54 @@ private
   def net_http(uri)
     h = Net::HTTP.new(uri.host, uri.port)
     h.use_ssl = @ssl
+    h.verify_mode = OpenSSL::SSL::VERIFY_NONE
     h
   end
 
   def story_xml_to_hash(xml)
     doc = Hpricot(xml).at('story')
-    { :id            => doc.at('id').innerHTML.to_i,
-      :story_type    => doc.at('story_type').innerHTML,
-      :name          => doc.at('name').innerHTML,
-      :estimate      => doc.at('estimate').innerHTML,
-      :current_state => doc.at('current_state').innerHTML,
-      :description   => doc.at('description').innerHTML,
-      :url           => doc.at('url').innerHTML,
-      :requested_by  => doc.at('requested_by').innerHTML.to_i,
-      :created_at    => doc.at('created_at').innerHTML.to_i
-    }      
+    story_to_hash(doc)
   end
 
+  # Converts a story xml element to a hash. 
+  #
+  def story_to_hash(story)
+    container_list_to_hash(story.containers)
+  end
+  
+  # Converts a list of hpricot containers to either :key => value pairs or 
+  # to :key => { ... } pairs, depending on whether elements are leaf nodes. 
+  #
+  def container_list_to_hash(containers)
+    hash = {}
+    containers.each do |container|      
+      value = nil
+      
+      if container.containers.empty?
+        # terminal element, add to hash
+        value = cast(container['type'], container.innerHTML)
+      else
+        # recurse
+        value = container_list_to_hash(container.containers)
+      end
+
+      name = container.name
+      hash[name.to_sym] = value
+    end
+    
+    hash
+  end
+  
+  # Casts xml type to ruby type. 
+  #
+  def cast(type, value)
+    case type
+    when 'integer'
+      Integer(value)
+    else
+      value
+    end
+  end
 end
 
 class TrackerException < Exception  
