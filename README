@@ -12,6 +12,10 @@ No installation needed. Just pass your API token key & project ID.  You can get 
 
 === Changelog
 
+2009-3-9: Fixed the error message captured for the TrackerException when things go wrong
+2009-3-9: Added update_state convenience method
+2009-3-9: Added VALID_STATES
+2009-3-9: Forked by bendycode
 2008-12-14: Added add_comment() support
 2008-12-13: Better return values (e.g. the contents of the response as a hash)
 2008-12-07: Success/failure validation of the response xml.

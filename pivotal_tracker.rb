@@ -9,6 +9,7 @@ require 'cgi'
 ##
 
 class Tracker
+  VALID_STATES = ['unscheduled', 'unstarted', 'started', 'finished', 'delivered', 'accepted']
   
   def initialize(project_id = '123', token = '45a6a078f67d9210d2fba91f8c484e7b', ssl=true)
     @project_id, @token, @ssl = project_id, token, ssl
@@ -126,6 +127,16 @@ class Tracker
       :author => doc.at('author').innerHTML,
       :date   => doc.at('date').innerHTML    }
   end
+
+  def update_state(story_id, new_state)
+    story = find_story(story_id)
+    raise TrackerException.new("No story with id: #{story_id}") unless story
+    unless VALID_STATES.include?(new_state)
+      raise TrackerException.new("Invalid state: #{new_state}.  Valid states are: #{VALID_STATES.join(', ')}")
+    end
+    story[:current_state] = new_state
+    update_story(story)
+  end
   
 private
     
@@ -140,7 +151,7 @@ private
   def validate_response(body)
     response = Hpricot(body).at('response')
     if response[:success]=='false'      
-      raise TrackerException.new((response/'message').innerHTML)
+      raise TrackerException.new((response/'errors'/'error').innerHTML)
     end
   end
 
