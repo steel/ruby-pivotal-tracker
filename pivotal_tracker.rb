@@ -150,13 +150,14 @@ private
   end
 
   def validate_response(body, response_root_element)
-    response = Hpricot(body).at(response_root_element)
-    if response == nil
-      raise TrackerException.new("Expected response root element to be #{response_root_element}, got nil")
+    doc = Hpricot(body)
+    response = doc.at(response_root_element)
+    if response == nil && doc.at("errors/error").nil?
+      raise TrackerException.new("Expected response root element to be #{response_root_element} for #{body}")
     elsif response.to_s.include? "<#{response_root_element}>"
       # success
-    elsif (response/'errors'/'error') != nil
-      raise TrackerException.new((response/'errors'/'error').innerHTML)
+    elsif doc.at("errors/error") != nil
+      raise TrackerException.new(doc.at("errors/error").innerHTML)
     end
   end
 
