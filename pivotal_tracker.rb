@@ -190,7 +190,7 @@ private
     containers.each do |container|      
       value = nil
       
-      if container.containers.empty?
+      if container.empty? || container.containers.empty?
         # terminal element, add to hash
         value = cast(container['type'], container.innerHTML)
       else
