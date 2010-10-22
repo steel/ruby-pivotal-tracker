@@ -135,6 +135,10 @@ class Tracker
     unless VALID_STATES.include?(new_state)
       raise TrackerException.new("Invalid state: #{new_state}.  Valid states are: #{VALID_STATES.join(', ')}")
     end
+    
+    # attempt to auto fix states
+    new_state = "accepted" if story[:story_type] == "chore" && new_state == "finished"
+      
     story[:current_state] = new_state
     update_story(story)
   end
